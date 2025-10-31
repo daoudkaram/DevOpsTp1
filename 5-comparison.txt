@@ -1,0 +1,2 @@
+optimized-app     18.9MB
+bloated-app       1.3GB
