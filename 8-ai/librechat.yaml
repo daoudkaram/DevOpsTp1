@@ -1,0 +1,19 @@
+version: 1.2.1
+
+endpoints:
+  custom:
+    - name: "ollama"
+      modelDisplayLabel: "Ollama"
+      baseURL: "http://ollama:11434/v1"   
+      apiKey: "ollama"                    
+      titleModel: "current_model"
+      models:
+        fetch: true
+        default: ["qwen2.5:3b"]
+
+# LibreChat will expose these tools in the UI when enabled on an Agent
+mcpServers:
+  context7:
+    url: "https://mcp.context7.com/mcp"
+    serverInstructions: true
+    startup: true

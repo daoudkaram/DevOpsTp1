@@ -1,0 +1,61 @@
+version: "3.9"
+
+name: local-ai
+services:
+  # Local models runtime
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"          # Ollama HTTP API
+    environment:
+      OLLAMA_HOST: "0.0.0.0"
+      # Useful if RAM is tight; reduces concurrent KV blocks
+      # OLLAMA_NUM_PARALLEL: "1"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      disable: true
+
+  # LibreChat web/app API (single container build)
+  librechat:
+    image: ghcr.io/danny-avila/librechat:latest
+    container_name: librechat
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    # LibreChat listens on 3080; bind to 3000 on host to match the exercise
+    ports:
+      - "3000:3080"
+    environment:
+      # Tell LibreChat to load our custom endpoints from librechat.yaml
+      ENDPOINTS: "librechat.yaml"
+      # Basic Mongo connection for chat history
+      MONGO_URI: "mongodb://mongo:27017/LibreChat"
+      # Optional: disable registration if you want a quick open box in dev
+      # ALLOW_REGISTRATION: "true"
+      JWT_SECRET: "daoud-local-secret"
+    volumes:
+      - ./librechat.yaml:/app/librechat.yaml:ro
+
+  # MongoDB for LibreChat state
+  mongo:
+    image: mongo:6
+    container_name: librechat-mongo
+    restart: unless-stopped
+    expose:
+      - "27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ollama_data:
+  mongo_data:
+
